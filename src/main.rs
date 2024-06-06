@@ -23,6 +23,7 @@ struct RequestData {
 struct OutputData28 {
     name: String,
     r#type: String,
+    total: f32,
     day1: f32,
     day2: f32,
     day3: f32,
@@ -57,6 +58,7 @@ struct OutputData28 {
 struct OutputData29 {
     name: String,
     r#type: String,
+    total: f32,
     day1: f32,
     day2: f32,
     day3: f32,
@@ -92,6 +94,7 @@ struct OutputData29 {
 struct OutputData30 {
     name: String,
     r#type: String,
+    total: f32,
     day1: f32,
     day2: f32,
     day3: f32,
@@ -128,6 +131,7 @@ struct OutputData30 {
 struct OutputData31 {
     name: String,
     r#type: String,
+    total: f32,
     day1: f32,
     day2: f32,
     day3: f32,
@@ -214,6 +218,7 @@ async fn transform_data(data: web::Json<RequestData>) -> impl Responder {
             28 => OutputData::Data28(OutputData28 {
                 name,
                 r#type,
+                total: days.iter().sum(),
                 day1: days[0],
                 day2: days[1],
                 day3: days[2],
@@ -246,6 +251,7 @@ async fn transform_data(data: web::Json<RequestData>) -> impl Responder {
             29 => OutputData::Data29(OutputData29 {
                 name,
                 r#type,
+                total: days.iter().sum(),
                 day1: days[0],
                 day2: days[1],
                 day3: days[2],
@@ -279,6 +285,7 @@ async fn transform_data(data: web::Json<RequestData>) -> impl Responder {
             30 => OutputData::Data30(OutputData30 {
                 name,
                 r#type,
+                total: days.iter().sum(),
                 day1: days[0],
                 day2: days[1],
                 day3: days[2],
@@ -313,6 +320,7 @@ async fn transform_data(data: web::Json<RequestData>) -> impl Responder {
             31 => OutputData::Data31(OutputData31 {
                 name,
                 r#type,
+                total: days.iter().sum(),
                 day1: days[0],
                 day2: days[1],
                 day3: days[2],
@@ -349,6 +357,7 @@ async fn transform_data(data: web::Json<RequestData>) -> impl Responder {
         })
         .collect();
     info!("Обработка запроса завершена успешно");
+
     HttpResponse::Ok().json(serde_json::json!({
         "length": output_data.len(),
         "data": output_data,
@@ -361,7 +370,7 @@ async fn main() -> std::io::Result<()> {
 
     let host = "127.0.0.1:8080";
 
-    info!("Сервер запускается на {}", host);
+    info!("Сервер запускается на http://{}", host);
     HttpServer::new(|| {
         App::new()
             .wrap(
