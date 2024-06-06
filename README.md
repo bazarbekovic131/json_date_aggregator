@@ -45,20 +45,10 @@ URL: http://127.0.0.1:8080/transform
 Headers: Content-Type: application/json
 Body: JSON array of objects with the following structure:
 ```json
-[
-  {
-    "name": "item1",
-    "type": "kg",
-    "date": "2024-06-01",
-    "amount": 10
-  },
-  {
-    "name": "item2",
-    "type": "kg",
-    "date": "2024-06-02",
-    "amount": 20
-  }
-]
+{"request": [
+    {"name": "item1", "type": "kg", "date": "01/01/2024", "amount": 10},
+    {"name": "item1", "type": "kg", "date": "02/01/2024", "amount": 20}
+]}
 ```
 
 Response
@@ -106,8 +96,9 @@ scp target/release/your_app_name user@your_server_ip:/path/to/your/app
 Create a systemd service file:
 ```ini
 sudo nano /etc/systemd/system/your_app_name.service
-Add the following content to the service file:
 ```
+
+Add the following content to the service file:
 
 ```ini
 [Unit]
@@ -138,8 +129,8 @@ You should see the service running.
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request.
+No contributions are required.
 
 # License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is not licensed

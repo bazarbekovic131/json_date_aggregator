@@ -1,5 +1,8 @@
+use actix_cors::Cors;
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use chrono::{Datelike, NaiveDate};
+use env_logger::Env;
+use log::info;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -9,6 +12,11 @@ struct InputData {
     r#type: String,
     date: String,
     amount: f64,
+}
+
+#[derive(Deserialize)]
+struct RequestData {
+    request: Vec<InputData>,
 }
 
 #[derive(Serialize)]
@@ -175,13 +183,19 @@ fn parse_date(date_str: &str) -> (i32, u8, u8) {
     (date.year(), date.month() as u8, date.day() as u8)
 }
 
-async fn transform_data(data: web::Json<Vec<InputData>>) -> impl Responder {
+async fn transform_data(data: web::Json<RequestData>) -> impl Responder {
+    info!("Получен запрос для трансформации данных");
     let mut output_map: HashMap<(String, String), Vec<f32>> = HashMap::new();
     let mut max_days = 0;
 
-    for entry in data.iter() {
+    for entry in data.request.iter() {
         let key = (entry.name.clone(), entry.r#type.clone());
         let (year, month, day) = parse_date(&entry.date);
+
+        info!(
+            "Обрабатываю вводные: Наименование={}, Ед. изм={}, Дата={}, Кол-во={}",
+            entry.name, entry.r#type, entry.date, entry.amount
+        );
 
         let days = output_map.entry(key).or_insert(vec![0.0; 31]);
 
@@ -334,14 +348,31 @@ async fn transform_data(data: web::Json<Vec<InputData>>) -> impl Responder {
             _ => unreachable!(),
         })
         .collect();
-
-    HttpResponse::Ok().json(output_data)
+    info!("Обработка запроса завершена успешно");
+    HttpResponse::Ok().json(serde_json::json!({
+        "length": output_data.len(),
+        "data": output_data,
+    }))
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().route("/transform", web::post().to(transform_data)))
-        .bind("127.0.0.1:8080")?
-        .run()
-        .await
+    env_logger::init_from_env(Env::default().default_filter_or("info"));
+
+    let host = "127.0.0.1:8080";
+
+    info!("Сервер запускается на {}", host);
+    HttpServer::new(|| {
+        App::new()
+            .wrap(
+                Cors::default()
+                    .allow_any_origin()
+                    .allow_any_method()
+                    .allow_any_header(),
+            )
+            .route("/transform", web::post().to(transform_data))
+    })
+    .bind(host)?
+    .run()
+    .await
 }
