@@ -1,23 +1,14 @@
+mod input;
+mod output;
+
 use actix_cors::Cors;
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use chrono::{Datelike, NaiveDate};
 use env_logger::Env;
+use input::RequestData;
 use log::info;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
-#[derive(Deserialize)]
-struct InputData {
-    name: String,
-    r#type: String,
-    date: String,
-    amount: f64,
-}
-
-#[derive(Deserialize)]
-struct RequestData {
-    request: Vec<InputData>,
-}
 
 #[derive(Serialize)]
 struct OutputData28 {
@@ -52,6 +43,7 @@ struct OutputData28 {
     day26: f32,
     day27: f32,
     day28: f32,
+    comment: String,
 }
 
 #[derive(Serialize)]
@@ -88,6 +80,7 @@ struct OutputData29 {
     day27: f32,
     day28: f32,
     day29: f32,
+    comment: String,
 }
 
 #[derive(Serialize)]
@@ -125,6 +118,7 @@ struct OutputData30 {
     day28: f32,
     day29: f32,
     day30: f32,
+    comment: String,
 }
 
 #[derive(Serialize)]
@@ -163,6 +157,7 @@ struct OutputData31 {
     day29: f32,
     day30: f32,
     day31: f32,
+    comment: String,
 }
 
 #[derive(Serialize)]
@@ -189,16 +184,16 @@ fn parse_date(date_str: &str) -> (i32, u8, u8) {
 
 async fn transform_data(data: web::Json<RequestData>) -> impl Responder {
     info!("Получен запрос для трансформации данных");
-    let mut output_map: HashMap<(String, String), Vec<f32>> = HashMap::new();
+    let mut output_map: HashMap<(String, String), String, Vec<f32>> = HashMap::new();
     let mut max_days = 0;
 
     for entry in data.request.iter() {
         let key = (entry.name.clone(), entry.r#type.clone());
         let (year, month, day) = parse_date(&entry.date);
-
+        let comment = entry.comment.clone();
         info!(
-            "Обрабатываю вводные: Наименование={}, Ед. изм={}, Дата={}, Кол-во={}",
-            entry.name, entry.r#type, entry.date, entry.amount
+            "Обрабатываю вводные: Наименование={}, Ед. изм={}, Дата={}, Кол-во={}, Прим.={}",
+            entry.name, entry.r#type, entry.date, entry.amount, entry.comment
         );
 
         let days = output_map.entry(key).or_insert(vec![0.0; 31]);
@@ -214,7 +209,7 @@ async fn transform_data(data: web::Json<RequestData>) -> impl Responder {
 
     let output_data: Vec<OutputData> = output_map
         .into_iter()
-        .map(|((name, r#type), days)| match max_days {
+        .map(|((name, r#type), comment, days)| match max_days {
             28 => OutputData::Data28(OutputData28 {
                 name,
                 r#type,
@@ -247,6 +242,7 @@ async fn transform_data(data: web::Json<RequestData>) -> impl Responder {
                 day26: days[25],
                 day27: days[26],
                 day28: days[27],
+                comment,
             }),
             29 => OutputData::Data29(OutputData29 {
                 name,
@@ -281,6 +277,7 @@ async fn transform_data(data: web::Json<RequestData>) -> impl Responder {
                 day27: days[26],
                 day28: days[27],
                 day29: days[28],
+                comment,
             }),
             30 => OutputData::Data30(OutputData30 {
                 name,
@@ -316,6 +313,7 @@ async fn transform_data(data: web::Json<RequestData>) -> impl Responder {
                 day28: days[27],
                 day29: days[28],
                 day30: days[29],
+                comment,
             }),
             31 => OutputData::Data31(OutputData31 {
                 name,
@@ -352,6 +350,7 @@ async fn transform_data(data: web::Json<RequestData>) -> impl Responder {
                 day29: days[28],
                 day30: days[29],
                 day31: days[30],
+                comment,
             }),
             _ => unreachable!(),
         })
