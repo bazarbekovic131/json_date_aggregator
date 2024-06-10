@@ -6,15 +6,15 @@ pub struct InputData {
     pub name: String,
     pub r#type: String,
     pub date: String,
-    pub amount: f64,
+    pub amount: String,
     pub comment: String,
 }
 
 #[derive(Deserialize)]
-struct AdditionalData {
-    department: String,
-    initiator: String,
-    organization: String,
+pub struct AdditionalData {
+    pub department: String,
+    pub initiator: String,
+    pub organization: String,
 }
 
 #[derive(Deserialize)]

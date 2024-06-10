@@ -7,167 +7,9 @@ use chrono::{Datelike, NaiveDate};
 use env_logger::Env;
 use input::RequestData;
 use log::info;
-use serde::{Deserialize, Serialize};
+use output::OutputData;
+// use serde::Serialize;
 use std::collections::HashMap;
-
-#[derive(Serialize)]
-struct OutputData28 {
-    name: String,
-    r#type: String,
-    total: f32,
-    day1: f32,
-    day2: f32,
-    day3: f32,
-    day4: f32,
-    day5: f32,
-    day6: f32,
-    day7: f32,
-    day8: f32,
-    day9: f32,
-    day10: f32,
-    day11: f32,
-    day12: f32,
-    day13: f32,
-    day14: f32,
-    day15: f32,
-    day16: f32,
-    day17: f32,
-    day18: f32,
-    day19: f32,
-    day20: f32,
-    day21: f32,
-    day22: f32,
-    day23: f32,
-    day24: f32,
-    day25: f32,
-    day26: f32,
-    day27: f32,
-    day28: f32,
-    comment: String,
-}
-
-#[derive(Serialize)]
-struct OutputData29 {
-    name: String,
-    r#type: String,
-    total: f32,
-    day1: f32,
-    day2: f32,
-    day3: f32,
-    day4: f32,
-    day5: f32,
-    day6: f32,
-    day7: f32,
-    day8: f32,
-    day9: f32,
-    day10: f32,
-    day11: f32,
-    day12: f32,
-    day13: f32,
-    day14: f32,
-    day15: f32,
-    day16: f32,
-    day17: f32,
-    day18: f32,
-    day19: f32,
-    day20: f32,
-    day21: f32,
-    day22: f32,
-    day23: f32,
-    day24: f32,
-    day25: f32,
-    day26: f32,
-    day27: f32,
-    day28: f32,
-    day29: f32,
-    comment: String,
-}
-
-#[derive(Serialize)]
-struct OutputData30 {
-    name: String,
-    r#type: String,
-    total: f32,
-    day1: f32,
-    day2: f32,
-    day3: f32,
-    day4: f32,
-    day5: f32,
-    day6: f32,
-    day7: f32,
-    day8: f32,
-    day9: f32,
-    day10: f32,
-    day11: f32,
-    day12: f32,
-    day13: f32,
-    day14: f32,
-    day15: f32,
-    day16: f32,
-    day17: f32,
-    day18: f32,
-    day19: f32,
-    day20: f32,
-    day21: f32,
-    day22: f32,
-    day23: f32,
-    day24: f32,
-    day25: f32,
-    day26: f32,
-    day27: f32,
-    day28: f32,
-    day29: f32,
-    day30: f32,
-    comment: String,
-}
-
-#[derive(Serialize)]
-struct OutputData31 {
-    name: String,
-    r#type: String,
-    total: f32,
-    day1: f32,
-    day2: f32,
-    day3: f32,
-    day4: f32,
-    day5: f32,
-    day6: f32,
-    day7: f32,
-    day8: f32,
-    day9: f32,
-    day10: f32,
-    day11: f32,
-    day12: f32,
-    day13: f32,
-    day14: f32,
-    day15: f32,
-    day16: f32,
-    day17: f32,
-    day18: f32,
-    day19: f32,
-    day20: f32,
-    day21: f32,
-    day22: f32,
-    day23: f32,
-    day24: f32,
-    day25: f32,
-    day26: f32,
-    day27: f32,
-    day28: f32,
-    day29: f32,
-    day30: f32,
-    day31: f32,
-    comment: String,
-}
-
-#[derive(Serialize)]
-#[serde(untagged)]
-enum OutputData {
-    Data28(OutputData28),
-    Data29(OutputData29),
-    Data30(OutputData30),
-    Data31(OutputData31),
-}
 
 fn get_days_in_month(year: i32, month: u8) -> u8 {
     let date = NaiveDate::from_ymd_opt(year, month.into(), 1).unwrap();
@@ -184,16 +26,16 @@ fn parse_date(date_str: &str) -> (i32, u8, u8) {
 
 async fn transform_data(data: web::Json<RequestData>) -> impl Responder {
     info!("Получен запрос для трансформации данных");
-    let mut output_map: HashMap<(String, String), String, Vec<f32>> = HashMap::new();
+    let mut output_map: HashMap<(String, String), Vec<f32>> = HashMap::new();
     let mut max_days = 0;
 
     for entry in data.request.iter() {
         let key = (entry.name.clone(), entry.r#type.clone());
         let (year, month, day) = parse_date(&entry.date);
-        let comment = entry.comment.clone();
+        // let comment = entry.comment.clone();
         info!(
-            "Обрабатываю вводные: Наименование={}, Ед. изм={}, Дата={}, Кол-во={}, Прим.={}",
-            entry.name, entry.r#type, entry.date, entry.amount, entry.comment
+            "Обрабатываю вводные: Наименование={}, Ед. изм={}, Дата={}, Кол-во={}",
+            entry.name, entry.r#type, entry.date, entry.amount
         );
 
         let days = output_map.entry(key).or_insert(vec![0.0; 31]);
@@ -203,156 +45,17 @@ async fn transform_data(data: web::Json<RequestData>) -> impl Responder {
         }
 
         if day as usize <= max_days as usize {
-            days[day as usize - 1] += entry.amount as f32;
+            days[day as usize - 1] += entry.amount.parse::<f32>().unwrap();
         }
     }
 
     let output_data: Vec<OutputData> = output_map
         .into_iter()
-        .map(|((name, r#type), comment, days)| match max_days {
-            28 => OutputData::Data28(OutputData28 {
-                name,
-                r#type,
-                total: days.iter().sum(),
-                day1: days[0],
-                day2: days[1],
-                day3: days[2],
-                day4: days[3],
-                day5: days[4],
-                day6: days[5],
-                day7: days[6],
-                day8: days[7],
-                day9: days[8],
-                day10: days[9],
-                day11: days[10],
-                day12: days[11],
-                day13: days[12],
-                day14: days[13],
-                day15: days[14],
-                day16: days[15],
-                day17: days[16],
-                day18: days[17],
-                day19: days[18],
-                day20: days[19],
-                day21: days[20],
-                day22: days[21],
-                day23: days[22],
-                day24: days[23],
-                day25: days[24],
-                day26: days[25],
-                day27: days[26],
-                day28: days[27],
-                comment,
-            }),
-            29 => OutputData::Data29(OutputData29 {
-                name,
-                r#type,
-                total: days.iter().sum(),
-                day1: days[0],
-                day2: days[1],
-                day3: days[2],
-                day4: days[3],
-                day5: days[4],
-                day6: days[5],
-                day7: days[6],
-                day8: days[7],
-                day9: days[8],
-                day10: days[9],
-                day11: days[10],
-                day12: days[11],
-                day13: days[12],
-                day14: days[13],
-                day15: days[14],
-                day16: days[15],
-                day17: days[16],
-                day18: days[17],
-                day19: days[18],
-                day20: days[19],
-                day21: days[20],
-                day22: days[21],
-                day23: days[22],
-                day24: days[23],
-                day25: days[24],
-                day26: days[25],
-                day27: days[26],
-                day28: days[27],
-                day29: days[28],
-                comment,
-            }),
-            30 => OutputData::Data30(OutputData30 {
-                name,
-                r#type,
-                total: days.iter().sum(),
-                day1: days[0],
-                day2: days[1],
-                day3: days[2],
-                day4: days[3],
-                day5: days[4],
-                day6: days[5],
-                day7: days[6],
-                day8: days[7],
-                day9: days[8],
-                day10: days[9],
-                day11: days[10],
-                day12: days[11],
-                day13: days[12],
-                day14: days[13],
-                day15: days[14],
-                day16: days[15],
-                day17: days[16],
-                day18: days[17],
-                day19: days[18],
-                day20: days[19],
-                day21: days[20],
-                day22: days[21],
-                day23: days[22],
-                day24: days[23],
-                day25: days[24],
-                day26: days[25],
-                day27: days[26],
-                day28: days[27],
-                day29: days[28],
-                day30: days[29],
-                comment,
-            }),
-            31 => OutputData::Data31(OutputData31 {
-                name,
-                r#type,
-                total: days.iter().sum(),
-                day1: days[0],
-                day2: days[1],
-                day3: days[2],
-                day4: days[3],
-                day5: days[4],
-                day6: days[5],
-                day7: days[6],
-                day8: days[7],
-                day9: days[8],
-                day10: days[9],
-                day11: days[10],
-                day12: days[11],
-                day13: days[12],
-                day14: days[13],
-                day15: days[14],
-                day16: days[15],
-                day17: days[16],
-                day18: days[17],
-                day19: days[18],
-                day20: days[19],
-                day21: days[20],
-                day22: days[21],
-                day23: days[22],
-                day24: days[23],
-                day25: days[24],
-                day26: days[25],
-                day27: days[26],
-                day28: days[27],
-                day29: days[28],
-                day30: days[29],
-                day31: days[30],
-                comment,
-            }),
-            _ => unreachable!(),
+        .map(|((name, r#type), days)| OutputData {
+            name,
+            r#type,
+            total: days.iter().sum(),
+            days,
         })
         .collect();
     info!("Обработка запроса завершена успешно");
